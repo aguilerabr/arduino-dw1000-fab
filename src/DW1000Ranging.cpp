@@ -113,7 +113,6 @@ void DW1000RangingClass::configureNetwork(uint16_t deviceAddress, uint16_t netwo
 	DW1000.setNetworkId(networkId);
 	DW1000.enableMode(mode);
 	DW1000.commitConfiguration();
-	
 }
 
 void DW1000RangingClass::generalStart() {

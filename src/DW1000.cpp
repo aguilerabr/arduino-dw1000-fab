@@ -712,7 +712,13 @@ void DW1000Class::tune() {
  * #### Interrupt handling ###################################################
  * ######################################################################### */
 
+#if defined(ESP8266)
+void ICACHE_RAM_ATTR DW1000Class::handleInterrupt() {
+#elif defined(ESP32)
+void IRAM_ATTR DW1000Class::handleInterrupt() {
+#elif defined(__AVR__)
 void DW1000Class::handleInterrupt() {
+#endif
 	// read current status and handle via callbacks
 	readSystemEventStatusRegister();
 	if(isClockProblem() /* TODO and others */ && _handleError != 0) {
