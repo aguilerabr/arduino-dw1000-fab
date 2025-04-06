@@ -99,7 +99,7 @@ const byte DW1000Class::BIAS_900_16[] = {137, 122, 105, 88, 69, 47, 25, 0, 21, 4
 const byte DW1000Class::BIAS_900_64[] = {147, 133, 117, 99, 75, 50, 29, 0, 24, 45, 63, 76, 87, 98, 116, 122, 132, 142};
 */
 // SPI settings
-#ifdef ESP8266
+#if defined(ESP8266) || defined(ESP32) 
 	// default ESP8266 frequency is 80 Mhz, thus divide by 4 is 20 MHz
 	const SPISettings DW1000Class::_fastSPI = SPISettings(20000000L, MSBFIRST, SPI_MODE0);
 #else
@@ -168,7 +168,7 @@ void DW1000Class::begin(uint8_t irq, uint8_t rst) {
 	// Configure the IRQ pin as INPUT. Required for correct interrupt setting for ESP8266
     	pinMode(irq, INPUT);
 	// start SPI
-	SPI.begin();
+	//SPI.begin();
 
 #ifndef ESP32
 #ifndef ESP8266
