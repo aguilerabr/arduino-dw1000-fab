@@ -20,6 +20,8 @@
 
 #include "DW1000.h"
 
+volatile bool DW1000Class::interruptFlag = false;
+
 DW1000Class DW1000;
 
 /* ###########################################################################
@@ -183,7 +185,13 @@ void DW1000Class::begin(uint8_t irq, uint8_t rst) {
 	// attach interrupt
 	//attachInterrupt(_irq, DW1000Class::handleInterrupt, CHANGE); // todo interrupt for ESP8266
 	// TODO throw error if pin is not a interrupt pin
-	attachInterrupt(digitalPinToInterrupt(_irq), DW1000Class::handleInterrupt, RISING); // todo interrupt for ESP8266
+#if defined(ESP8266)
+	attachInterrupt(digitalPinToInterrupt(_irq), DW1000Class::handleSimpleInterrupt, RISING); // interrupcao somente com flag
+	//attachInterrupt(digitalPinToInterrupt(_irq), DW1000Class::handleInterrupt, RISING); // todo interrupt for ESP8266
+#elif defined(ESP32)
+	attachInterrupt(_irq, DW1000Class::handleSimpleInterrupt, FALLING); // interrupcao somente com flag
+	//attachInterrupt(_irq, DW1000Class::handleInterrupt, FALLING); // todo interrupt for ESP32
+#endif
 }
 
 void DW1000Class::manageLDE() {
@@ -711,16 +719,29 @@ void DW1000Class::tune() {
 /* ###########################################################################
  * #### Interrupt handling ###################################################
  * ######################################################################### */
-
 #if defined(ESP8266)
-void ICACHE_RAM_ATTR DW1000Class::handleInterrupt() {
+void ICACHE_RAM_ATTR DW1000Class::handleSimpleInterrupt() {
 #elif defined(ESP32)
-void IRAM_ATTR DW1000Class::handleInterrupt() {
+void IRAM_ATTR DW1000Class::handleSimpleInterrupt() {
 #elif defined(__AVR__)
+void DW1000Class::handleSimpleInterrupt() {
+#endif	
+	interruptFlag = true;
+}
+
+/* ###########################################################################
+ * #### Interrupt handling ###################################################
+ * ######################################################################### */
+ #if defined(ESP8266)
+ void ICACHE_RAM_ATTR DW1000Class::handleInterrupt() {
+ #elif defined(ESP32)
+ void IRAM_ATTR DW1000Class::handleInterrupt() {
+ #elif defined(__AVR__)
 void DW1000Class::handleInterrupt() {
-#endif
+ #endif	
 	// read current status and handle via callbacks
 	readSystemEventStatusRegister();
+
 	if(isClockProblem() /* TODO and others */ && _handleError != 0) {
 		(*_handleError)();
 	}
@@ -754,6 +775,7 @@ void DW1000Class::handleInterrupt() {
 			startReceive();
 		}
 	}
+
 	// clear all status that is left unhandled
 	clearAllStatus();
 }
@@ -1824,4 +1846,11 @@ void DW1000Class::getPrettyBytes(byte cmd, uint16_t offset, char msgBuffer[], ui
 	}
 	msgBuffer[b++] = '\0';
 	free(readBuf);
+}
+
+void DW1000Class::interruptLoop() {
+	if (interruptFlag) {
+		interruptFlag = false;
+		handleInterrupt();
+	}
 }

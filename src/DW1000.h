@@ -38,6 +38,9 @@
 
 class DW1000Class {
 public:
+	static volatile bool interruptFlag;
+	void interruptLoop();
+
 	/* ##### Init ################################################################ */
 	/** 
 	Initiates and starts a sessions with one or more DW1000. If rst is not set or value 0xff, a soft resets (i.e. command
@@ -469,6 +472,7 @@ public:
 
 	/* Arduino interrupt handler */
 	static void handleInterrupt();
+	static void handleSimpleInterrupt();
 	
 	/* Allow MAC frame filtering . */
 	// TODO auto-acknowledge
